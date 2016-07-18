@@ -1,7 +1,9 @@
 (ns prologger.core)
 
 
-(def filename "/tmp/cleaned_it.txt" )
+(def filename "/tmp/smaller_file.txt" )
+
+'I need slurp to trim the file so that it removes the t7.
 
 (slurp filename )
 
@@ -16,24 +18,45 @@
        (clojure.string/split string #"\r\n")))
 
 
-(def my-keys [:name :length])
+(def my-keys [:date :name :length])
+
+(str->date "2016/7/6")
+
+(defn str->date
+  [str]
+  (#(.parse
+     (java.text.SimpleDateFormat. "yyyy,MM,dd,hh,mm,ss") %)
+    (clojure.string/replace str #"t7\(" "" )))
 
 
 (defn str->int
   [str]
   (Integer. str))
 
-(parse (slurp filename))
+(parse  (slurp filename))
 
 
-(replace (parse (slurp filename)))
+'(replace (parse (slurp filename)))
 
 
-(def conversions {:name identity
+(def conversions {:date str->date
+                  :name identity
                   :length str->int
                   })
 
 
+
+
+;Create a filter that grabs only the queues
+(defn t7-filter
+  [rows]
+  (filter #(clojure.string/includes? % "t7(") rows ) )
+
+
+
+(map t7-filter (parse (slurp filename)))
+
+;A nother comment to check where this is saving -l
 
 (defn mapify
     "Return a seq of maps like {:name \"Edward Cullen\" :glitter-index 10}"
@@ -43,14 +66,16 @@
                      (assoc row-map my-key (convert my-key my-value)))
                    {}
                    (map vector my-keys unmapped-row)))
-         rows))
+         (t7-filter rows)))
 
+(parse (slurp filename))
 
-
-'(rest (mapify (parse (slurp filename))))
+(mapify (parse (slurp filename)))
 
 (defn queue-filter
   [minimum-count records]
   (filter #(>= (:length %) minimum-count) records))
 
 (queue-filter 10 (mapify (parse (slurp filename))))
+
+(builder)
